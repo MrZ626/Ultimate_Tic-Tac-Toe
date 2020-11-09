@@ -15,6 +15,7 @@ local lines={
 local board={{},{},{},{},{},{},{},{},{}}
 local score={}
 
+local lastX,lastx
 local round
 local target
 local gameover
@@ -32,6 +33,7 @@ local function checkBoard(b,p)
 end
 
 function sceneInit.play()
+	lastX,lastx=false,false
 	round=0
 	target=false
 	gameover=false
@@ -50,15 +52,15 @@ function Pnt.play()
 	gc.scale(4)
 	gc.setColor(0,0,0,.4)
 	gc.rectangle("fill",0,0,90,90)
-	gc.setLineWidth(.8)
-	if not gameover then
-		gc.setColor(1,1,1,math.sin(love.timer.getTime()*5)/5+.2)
-		if target then
-			gc.rectangle("fill",(target-1)%3*30,int((target-1)/3)*30,30,30)
-		else
-			gc.rectangle("fill",0,0,90,90)
-		end
+
+	gc.setColor(1,1,1,math.sin(love.timer.getTime()*5)/5+.2)
+	if target then
+		gc.rectangle("fill",(target-1)%3*30,int((target-1)/3)*30,30,30)
+	else
+		gc.rectangle("fill",0,0,90,90)
 	end
+
+	gc.setLineWidth(.8)
 	for X=1,9 do
 		if score[X]then
 			if score[X]==0 then
@@ -105,6 +107,10 @@ function Pnt.play()
 		gc.line(10*x,0,10*x,90)
 		gc.line(0,10*x,90,10*x)
 	end
+	if lastX then
+		gc.setColor(.5,1,.4,.8)
+		gc.rectangle("line",(lastX-1)%3*30+(lastx-1)%3*10-.5,int((lastX-1)/3)*30+int((lastx-1)/3)*10-.5,11,11)
+	end
 	gc.pop()
 	if gameover then
 		setFont(60)
@@ -118,6 +124,22 @@ function Pnt.play()
 			gc.setColor(.8,.8,.8)
 			mStr("TIE",180,525)
 		end
+	else
+		gc.setColor(.8,.8,.8,.8)
+		gc.rectangle("fill",80-40,70-40,80,80)
+		gc.setColor(1,1,1)
+		gc.setLineWidth(3)
+		gc.rectangle("line",80-40,70-40,80,80)
+
+		gc.setLineWidth(5)
+		if round==0 then
+			gc.setColor(.8,0,0)
+			gc.circle("line",80,70,25)
+		else
+			gc.setColor(0,0,.9)
+			gc.line(80-23,70-23,80+23,70+23)
+			gc.line(80-23,70+23,80+23,70-23)
+		end
 	end
 end
 
@@ -126,8 +148,9 @@ function touchDown.play(_,x,y)
 	x,y=int(x/3)+int(y/3)*3+1,x%3+y%3*3+1
 	if x<1 or x>9 or y<1 or y>9 then return end
 	--Notice: x,y is not x,y
-	if not board[x][y]and not score[x]and(target==x or not target)then
+	if not board[x][y]and not score[x]and(target==x or not target)and not gameover then
 		board[x][y]=round
+		lastX,lastx=x,y
 		if checkBoard(board[x],round)then
 			score[x]=round
 			if checkBoard(score,round)then
@@ -140,6 +163,7 @@ function touchDown.play(_,x,y)
 					end
 				end
 				gameover=true
+				do return end
 				::continueGame::
 			end
 		else

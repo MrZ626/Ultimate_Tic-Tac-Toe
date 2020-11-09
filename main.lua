@@ -13,7 +13,7 @@ SCR={
 	rad=0,--Radius
 	k=1,--Scale size
 	dpi=1--DPI from gc.getDPIScale()
-}--1280:720-Rect Screen Info
+}--360:640-Rect Screen Info
 SETTING={
 	sfx=1,
 	bgm=.7,
