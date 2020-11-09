@@ -17,6 +17,7 @@ local board={{},{},{},{},{},{},{},{},{}}
 local score={}
 
 local lastX,lastx
+local curX,curx
 local round
 local target
 local placeTime
@@ -32,6 +33,42 @@ local function checkBoard(b,p)
 		do return true end
 		::nextLine::
 	end
+end
+
+local function place(X,x)
+	board[X][x]=round
+	lastX,lastx=X,x
+	placeTime=Timer()
+	if checkBoard(board[X],round)then
+		score[X]=round
+		if checkBoard(score,round)then
+			gameover=round
+			return
+		else
+			for i=1,9 do
+				if not score[i]then
+					goto continueGame
+				end
+			end
+			gameover=true
+			do return end
+			::continueGame::
+		end
+	else
+		for i=1,9 do
+			if not board[X][i]then
+				goto continueGame
+			end
+		end
+		score[X]=true
+		::continueGame::
+	end
+	if score[x]then
+		target=false
+	else
+		target=x
+	end
+	round=1-round
 end
 
 function sceneInit.play()
@@ -53,14 +90,23 @@ function Pnt.play()
 	gc.push("transform")
 	gc.translate(0,140)
 	gc.scale(4)
+
+	--Draw board
 	gc.setColor(0,0,0,.4)
 	gc.rectangle("fill",0,0,90,90)
 
+	--Draw target area
 	gc.setColor(1,1,1,math.sin((Timer()-placeTime)*5)/5+.2)
 	if target then
 		gc.rectangle("fill",(target-1)%3*30,int((target-1)/3)*30,30,30)
 	else
 		gc.rectangle("fill",0,0,90,90)
+	end
+
+	--Draw cursor
+	if curX then
+		gc.setColor(1,1,1,.3)
+		gc.rectangle("fill",(curX-1)%3*30+(curx-1)%3*10-.5,int((curX-1)/3)*30+int((curx-1)/3)*10-.5,11,11)
 	end
 
 	gc.setLineWidth(.8)
@@ -104,18 +150,24 @@ function Pnt.play()
 			end
 		end
 	end
+
+	--Draw board line
 	gc.setLineWidth(.8)
 	for x=0,9 do
 		gc.setColor(1,1,1,x%3==0 and 1 or .3)
 		gc.line(10*x,0,10*x,90)
 		gc.line(0,10*x,90,10*x)
 	end
+
+	--Draw last pos
 	if lastX then
 		gc.setColor(.5,1,.4,.8)
 		gc.rectangle("line",(lastX-1)%3*30+(lastx-1)%3*10-.5,int((lastX-1)/3)*30+int((lastx-1)/3)*10-.5,11,11)
 	end
 	gc.pop()
+
 	if gameover then
+		--Draw result
 		setFont(60)
 		if gameover==0 then
 			gc.setColor(1,.6,.6)
@@ -128,6 +180,7 @@ function Pnt.play()
 			mStr("TIE",180,525)
 		end
 	else
+		--Draw current round mark
 		gc.setColor(.8,.8,.8,.8)
 		gc.rectangle("fill",80-40,70-40,80,80)
 		gc.setColor(1,1,1)
@@ -136,10 +189,10 @@ function Pnt.play()
 
 		gc.setLineWidth(5)
 		if round==0 then
-			gc.setColor(.8,0,0)
+			gc.setColor(1,0,0)
 			gc.circle("line",80,70,25)
 		else
-			gc.setColor(0,0,.9)
+			gc.setColor(0,0,1)
 			gc.line(80-23,70-23,80+23,70+23)
 			gc.line(80-23,70+23,80+23,70-23)
 		end
@@ -147,49 +200,33 @@ function Pnt.play()
 end
 
 function touchDown.play(_,x,y)
+	mouseMove.play(x,y)
+end
+
+function touchMove.play(_,x,y)
+	mouseMove.play(x,y)
+end
+
+function touchUp.play(_,x,y)
+	mouseDown.play(x,y)
+end
+
+function mouseMove.play(x,y)
 	x,y=int(x/40),int((y-140)/40)
-	x,y=int(x/3)+int(y/3)*3+1,x%3+y%3*3+1
-	if x<1 or x>9 or y<1 or y>9 then return end
-	--Notice: x,y is not x,y
-	if not board[x][y]and not score[x]and(target==x or not target)and not gameover then
-		board[x][y]=round
-		lastX,lastx=x,y
-		placeTime=Timer()
-		if checkBoard(board[x],round)then
-			score[x]=round
-			if checkBoard(score,round)then
-				gameover=round
-				return
-			else
-				for i=1,9 do
-					if not score[i]then
-						goto continueGame
-					end
-				end
-				gameover=true
-				do return end
-				::continueGame::
-			end
-		else
-			for i=1,9 do
-				if not board[x][i]then
-					goto continueGame
-				end
-			end
-			score[x]=true
-			::continueGame::
-		end
-		if score[y]then
-			target=false
-		else
-			target=y
-		end
-		round=1-round
-	end
+	curX,curx=int(x/3)+int(y/3)*3+1,x%3+y%3*3+1
+	if
+		curX<1 or curX>9 or
+		curx<1 or curx>9 or
+		score[curX]or
+		not(target==curX or not target)or
+		board[curX][curx]or
+		gameover
+	then curX,curx=nil end
 end
 
 function mouseDown.play(x,y)
-	touchDown.play(nil,x,y)
+	mouseMove.play(x,y)
+	if curX then place(curX,curx)end
 end
 
 WIDGET.init("play",{
