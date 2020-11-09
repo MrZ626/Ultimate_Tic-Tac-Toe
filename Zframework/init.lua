@@ -227,14 +227,14 @@ function love.resize(w,h)
 	SCR.r=h/w
 	SCR.rad=(w^2+h^2)^.5
 
-	if SCR.r>=16/9 then
-		SCR.k=w/360
-		SCR.x,SCR.y=0,(h-w*16/9)*.5
+	if SCR.r>=SCR.h0/SCR.w0 then
+		SCR.k=w/SCR.w0
+		SCR.x,SCR.y=0,(h-w*SCR.h0/SCR.w0)/2
 	else
-		SCR.k=h/640
-		SCR.x,SCR.y=(w-h*9/16)*.5,0
+		SCR.k=h/SCR.h0
+		SCR.x,SCR.y=(w-h*SCR.w0/SCR.h0)/2,0
 	end
-	xOy=xOy:setTransformation(w*.5,h*.5,nil,SCR.k,nil,180,320)
+	xOy=xOy:setTransformation(w/2,h/2,nil,SCR.k,nil,SCR.w0/2,SCR.h0/2)
 	if BG.resize then BG.resize(w,h)end
 end
 function love.errorhandler(msg)

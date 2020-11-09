@@ -9,12 +9,9 @@ local BG={
 	discard=NULL,
 }
 
---Load Background files from SOURCE ONLY
-for _,v in next,love.filesystem.getDirectoryItems("backgrounds")do
-	local name=v:sub(1,-5)
-	BGlist[name]=require("backgrounds/"..name)
+function BG.add(name,bg)
+	BGlist[name]=bg
 end
-
 function BG.send(...)
 	if BG.event then
 		BG.event(...)
