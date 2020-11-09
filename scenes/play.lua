@@ -1,5 +1,6 @@
 local gc=love.graphics
 local int=math.floor
+local Timer=love.timer.getTime
 
 local lines={
 	{1,2,3},
@@ -18,6 +19,7 @@ local score={}
 local lastX,lastx
 local round
 local target
+local placeTime
 local gameover
 
 local function checkBoard(b,p)
@@ -36,6 +38,7 @@ function sceneInit.play()
 	lastX,lastx=false,false
 	round=0
 	target=false
+	placeTime=Timer()
 	gameover=false
 	for X=1,9 do
 		score[X]=false
@@ -53,7 +56,7 @@ function Pnt.play()
 	gc.setColor(0,0,0,.4)
 	gc.rectangle("fill",0,0,90,90)
 
-	gc.setColor(1,1,1,math.sin(love.timer.getTime()*5)/5+.2)
+	gc.setColor(1,1,1,math.sin((Timer()-placeTime)*5)/5+.2)
 	if target then
 		gc.rectangle("fill",(target-1)%3*30,int((target-1)/3)*30,30,30)
 	else
@@ -151,6 +154,7 @@ function touchDown.play(_,x,y)
 	if not board[x][y]and not score[x]and(target==x or not target)and not gameover then
 		board[x][y]=round
 		lastX,lastx=x,y
+		placeTime=Timer()
 		if checkBoard(board[x],round)then
 			score[x]=round
 			if checkBoard(score,round)then
