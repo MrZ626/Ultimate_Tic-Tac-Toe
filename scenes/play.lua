@@ -38,6 +38,7 @@ end
 local function place(X,x)
 	board[X][x]=round
 	lastX,lastx=X,x
+	curX,curx=nil
 	placeTime=Timer()
 	if checkBoard(board[X],round)then
 		score[X]=round
@@ -221,7 +222,9 @@ function mouseMove.play(x,y)
 		not(target==curX or not target)or
 		board[curX][curx]or
 		gameover
-	then curX,curx=nil end
+	then
+		curX,curx=nil
+	end
 end
 
 function mouseDown.play(x,y)
