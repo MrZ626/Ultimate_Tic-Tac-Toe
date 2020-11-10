@@ -30,7 +30,6 @@ local setFont=setFont
 
 local mx,my,mouseShow=-20,-20,false
 local touching=nil--First touching ID(userdata)
-xOy=love.math.newTransform()
 joysticks={}
 
 local devMode
@@ -85,13 +84,12 @@ local mouseClick,touchClick=mouseClick,touchClick
 local mouseDown,mouseMove,mouseUp,wheelMoved=mouseDown,mouseMove,mouseUp,wheelMoved
 local touchDown,touchUp,touchMove=touchDown,touchUp,touchMove
 local keyDown,keyUp=keyDown,keyUp
-local gamepadDown,gamepadUp=gamepadDown,gamepadUp
 -------------------------------------------------------------
 local lastX,lastY=0,0--Last clickDown pos
 function love.mousepressed(x,y,k,touch)
 	if touch then return end
 	mouseShow=true
-	mx,my=xOy:inverseTransformPoint(x,y)
+	mx,my=SCR.xOy:inverseTransformPoint(x,y)
 	if devMode==1 then print(mx,my)end
 	if SCN.swapping then return end
 	if mouseDown[SCN.cur]then
@@ -108,7 +106,7 @@ end
 function love.mousemoved(x,y,dx,dy,t)
 	if t then return end
 	mouseShow=true
-	mx,my=xOy:inverseTransformPoint(x,y)
+	mx,my=SCR.xOy:inverseTransformPoint(x,y)
 	if SCN.swapping then return end
 	dx,dy=dx/SCR.k,dy/SCR.k
 	if mouseMove[SCN.cur]then
@@ -122,7 +120,7 @@ function love.mousemoved(x,y,dx,dy,t)
 end
 function love.mousereleased(x,y,k,touch)
 	if touch or SCN.swapping then return end
-	mx,my=xOy:inverseTransformPoint(x,y)
+	mx,my=SCR.xOy:inverseTransformPoint(x,y)
 	WIDGET.release(mx,my)
 	WIDGET.moveCursor(mx,my)
 	if mouseUp[SCN.cur]then
@@ -144,7 +142,7 @@ function love.touchpressed(id,x,y)
 		touching=id
 		love.touchmoved(id,x,y,0,0)
 	end
-	x,y=xOy:inverseTransformPoint(x,y)
+	x,y=SCR.xOy:inverseTransformPoint(x,y)
 	lastX,lastY=x,y
 	if touchDown[SCN.cur]then
 		touchDown[SCN.cur](id,x,y)
@@ -153,7 +151,7 @@ function love.touchpressed(id,x,y)
 end
 function love.touchmoved(id,x,y,dx,dy)
 	if SCN.swapping then return end
-	x,y=xOy:inverseTransformPoint(x,y)
+	x,y=SCR.xOy:inverseTransformPoint(x,y)
 	if touchMove[SCN.cur]then
 		touchMove[SCN.cur](id,x,y,dx/SCR.k,dy/SCR.k)
 	end
@@ -170,7 +168,7 @@ function love.touchmoved(id,x,y,dx,dy)
 end
 function love.touchreleased(id,x,y)
 	if SCN.swapping then return end
-	x,y=xOy:inverseTransformPoint(x,y)
+	x,y=SCR.xOy:inverseTransformPoint(x,y)
 	if id==touching then
 		WIDGET.press(x,y)
 		WIDGET.release(x,y)
@@ -234,7 +232,7 @@ function love.resize(w,h)
 		SCR.k=h/SCR.h0
 		SCR.x,SCR.y=(w-h*SCR.w0/SCR.h0)/2,0
 	end
-	xOy=xOy:setTransformation(w/2,h/2,nil,SCR.k,nil,SCR.w0/2,SCR.h0/2)
+	SCR.xOy=SCR.xOy:setTransformation(w/2,h/2,nil,SCR.k,nil,SCR.w0/2,SCR.h0/2)
 	if BG.resize then BG.resize(w,h)end
 end
 function love.errorhandler(msg)
@@ -277,7 +275,7 @@ function love.errorhandler(msg)
 				needDraw=true
 			elseif E=="focus"then
 				needDraw=true
-			elseif E=="touchpressed"or E=="mousepressed"or E=="keypressed"and a=="space"then
+			elseif E=="touchpressed"and b<100 or E=="mousepressed" and a==2 or E=="keypressed"and a=="space"then
 				if count<3 then
 					count=count+1
 					SFX.play("ready")
@@ -298,7 +296,7 @@ function love.errorhandler(msg)
 			gc.clear(BGcolor)
 			gc.setColor(1,1,1)
 			gc.push("transform")
-			gc.replaceTransform(xOy)
+			gc.replaceTransform(SCR.xOy)
 			gc.draw(errScrShot,100,365,nil,512/errScrShot:getWidth(),288/errScrShot:getHeight())
 			setFont(120)gc.print(":(",100,40)
 			setFont(38)gc.printf("你的电脑遇到问题，需要重新启动。\n我们只收集某\n些错误信息，然后你可以重新启动。",100,200,1280-100)
@@ -374,7 +372,7 @@ function love.run()
 
 			BG.draw()
 			gc.push("transform")
-				gc.replaceTransform(xOy)
+				gc.replaceTransform(SCR.xOy)
 
 				--Draw scene contents
 				if Pnt[SCN.cur]then Pnt[SCN.cur]()end
