@@ -23,6 +23,19 @@ local target
 local placeTime
 local gameover
 
+local function restart()
+	lastX,lastx=false,false
+	round=0
+	target=false
+	placeTime=Timer()
+	gameover=false
+	for X=1,9 do
+		score[X]=false
+		for x=1,9 do
+			board[X][x]=false
+		end
+	end
+end
 local function checkBoard(b,p)
 	for i=1,8 do
 		for j=1,3 do
@@ -73,17 +86,7 @@ local function place(X,x)
 end
 
 function sceneInit.play()
-	lastX,lastx=false,false
-	round=0
-	target=false
-	placeTime=Timer()
-	gameover=false
-	for X=1,9 do
-		score[X]=false
-		for x=1,9 do
-			board[X][x]=false
-		end
-	end
+	restart()
 	BG.set("bg2")
 end
 
@@ -234,5 +237,5 @@ end
 
 WIDGET.init("play",{
 	WIDGET.newButton({name="quit",text="返回",x=300,y=40,w=90,h=50,font=20,color="lY",code=WIDGET.lnk.BACK}),
-	WIDGET.newButton({name="again",text="重新开始",x=300,y=100,w=90,h=50,font=20,color="lG",code=function()sceneInit.play()end,hide=function()return not gameover end}),
+	WIDGET.newButton({name="again",text="重新开始",x=300,y=100,w=90,h=50,font=20,color="lG",code=restart,hide=function()return not gameover end}),
 })
