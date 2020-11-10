@@ -19,7 +19,6 @@ VOC=	require("Zframework/voice")
 
 TASK=	require("Zframework/task")
 FILE=	require("Zframework/file")
-PROFILE=require("Zframework/profile")
 
 local ms,kb=love.mouse,love.keyboard
 local gc=love.graphics
