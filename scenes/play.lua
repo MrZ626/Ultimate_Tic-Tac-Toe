@@ -25,6 +25,7 @@ local gameover
 
 local function restart()
 	lastX,lastx=false,false
+	curX,curx=nil
 	round=0
 	target=false
 	placeTime=Timer()
@@ -36,6 +37,7 @@ local function restart()
 		end
 	end
 end
+
 local function checkBoard(b,p)
 	for i=1,8 do
 		for j=1,3 do

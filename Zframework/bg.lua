@@ -1,10 +1,16 @@
-local BGlist={}
+local BGlist={
+	none={
+		draw=function()
+			love.graphics.clear(.15,.15,.15)
+		end
+	}
+}
 local BG={
-	cur="",
+	cur="none",
 	init=nil,
 	resize=nil,
 	update=NULL,
-	draw=NULL,
+	draw=BGlist.none.draw,
 	event=nil,
 	discard=NULL,
 }
@@ -20,12 +26,12 @@ end
 function BG.set(background)
 	if background==BG.cur then return end
 	BG.discard()
+	BG.cur=background
 	background=BGlist[background]
 	if not background then
 		LOG.print("No BG called"..background,"warn")
 		return
 	end
-	BG.cur=background
 
 	BG.init=	background.init or NULL
 	BG.resize=	background.resize or NULL
