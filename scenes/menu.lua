@@ -13,6 +13,6 @@ function Pnt.menu()
 end
 
 WIDGET.init("menu",{
-	WIDGET.newButton({name="play",text="开始",x=180,y=300,w=180,h=80,color="lG",code=WIDGET.lnk.goScene("play")}),
+	WIDGET.newButton({name="play",text="开始",x=180,y=300,w=180,h=80,color="lG",code=WIDGET.lnk_goScene("play")}),
 	WIDGET.newButton({name="quit",text="退出",x=180,y=400,w=180,h=80,color="lR",code=function()SCN.swapTo("quit","slowFade")end}),
 })

@@ -681,12 +681,11 @@ end
 WIDGET.active={}--Table contains all active widgets
 WIDGET.sel=nil--Selected widget
 
-WIDGET.lnk={
-	BACK=function()SCN.back()end,
-	pressKey=function(k)return function()	love.keypressed(k)				end end,
-	goScene=function(t,s)return function()	SCN.go(t,s)						end end,
-	swapScene=function(t,s)return function()SCN.swapTo(t,s)					end end,
-}
+function WIDGET.lnk_BACK()			SCN.back()end
+function WIDGET.lnk_pressKey(k)		return function()	love.keypressed(k)				end end
+function WIDGET.lnk_goScene(t,s)	return function()	SCN.go(t,s)						end end
+function WIDGET.lnk_swapScene(t,s)	return function()	SCN.swapTo(t,s)					end end
+
 local indexMeta={
 	__index=function(L,k)
 		for i=1,#L do

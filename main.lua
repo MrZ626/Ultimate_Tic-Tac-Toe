@@ -4,18 +4,8 @@ math.randomseed(os.time()*626)
 love.mouse.setVisible(false)
 
 SYSTEM=love.system.getOS()
-gameVersion="V0.9"
+VERSION="V0.9"
 MOBILE=SYSTEM=="Android"or SYSTEM=="iOS"
-SCR={
-	w0=360,h0=640,--Default Screen Size
-	x=0,y=0,--Up-left Coord on screen
-	w=0,h=0,--Fullscreen w/h in gc
-	W=0,H=0,--Fullscreen w/h in shader
-	rad=0,--Radius
-	k=1,--Scale size
-	dpi=1,--DPI from gc.getDPIScale()
-	xOy=love.math.newTransform(),--Screen transformation object
-}
 SETTING={
 	sfx=true,
 	bgm=true,
@@ -23,8 +13,18 @@ SETTING={
 }
 EDITING=""
 
-
 require("Zframework")--Load framework
+
+SCR.setSize(360,640)--Initialize Screen size
+
+SFX.set{}BGM.set{}VOC.set{}
+
+--Load shader files
+SHADER={}
+for _,v in next,love.filesystem.getDirectoryItems("shaders")do
+	local name=v:sub(1,-6)
+	SHADER[name]=love.graphics.newShader("shaders/"..name..".glsl")
+end
 
 --Load background files
 for _,v in next,fs.getDirectoryItems("backgrounds")do
