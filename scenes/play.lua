@@ -119,7 +119,7 @@ function Pnt.play()
 	for X=1,9 do
 		if score[X]then
 			if score[X]==0 then
-				gc.setColor(.4,0,0)
+				gc.setColor(.5,0,0)
 			elseif score[X]==1 then
 				gc.setColor(0,0,.5)
 			else
@@ -168,7 +168,8 @@ function Pnt.play()
 	--Draw last pos
 	if lastX then
 		gc.setColor(.5,1,.4,.8)
-		gc.rectangle("line",(lastX-1)%3*30+(lastx-1)%3*10-.5,int((lastX-1)/3)*30+int((lastx-1)/3)*10-.5,11,11)
+		local r=.5+.5*math.sin(Timer()*6.26)
+		gc.rectangle("line",(lastX-1)%3*30+(lastx-1)%3*10-r,int((lastX-1)/3)*30+int((lastx-1)/3)*10-r,10+2*r,10+2*r)
 	end
 	gc.pop()
 
