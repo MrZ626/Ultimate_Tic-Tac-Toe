@@ -49,7 +49,14 @@ local function checkBoard(b,p)
 		::nextLine::
 	end
 end
-
+local function full(L)
+	for i=1,9 do
+		if not L[i]then
+			return false
+		end
+	end
+	return true
+end
 local function place(X,x)
 	board[X][x]=round
 	lastX,lastx=X,x
@@ -61,23 +68,19 @@ local function place(X,x)
 			gameover=round
 			return
 		else
-			for i=1,9 do
-				if not score[i]then
-					goto continueGame
-				end
+			if full(score)then
+				gameover=true
+				return
 			end
-			gameover=true
-			do return end
-			::continueGame::
 		end
 	else
-		for i=1,9 do
-			if not board[X][i]then
-				goto continueGame
+		if full(board[X])then
+			score[X]=true
+			if full(score)then
+				gameover=true
+				return
 			end
 		end
-		score[X]=true
-		::continueGame::
 	end
 	if score[x]then
 		target=false
@@ -123,7 +126,7 @@ function Pnt.play()
 			elseif score[X]==1 then
 				gc.setColor(0,0,.5)
 			else
-				gc.setColor(.5,.5,.5)
+				gc.setColor(0,0,0)
 			end
 			gc.rectangle("fill",(X-1)%3*30,int((X-1)/3)*30,30,30)
 		end
