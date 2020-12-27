@@ -78,7 +78,7 @@ end
 
 local list_dark={"dRed","dFire","dOrange","dYellow","dLame","dGrass","dGreen","dWater","dCyan","dSky","dSea","dBlue","dPurple","dGrape","dMagenta","dPink"}
 local len_list_dark=#list_dark
-function COLOR.random_bright()
+function COLOR.random_dark()
 	return COLOR[list_dark[rnd(len_list_dark)]]
 end
 
@@ -88,6 +88,24 @@ function COLOR.rainbow(phase)
 		sin(phase)*.4+.6,
 		sin(phase+2.0944)*.4+.6,
 		sin(phase-2.0944)*.4+.6
+end
+function COLOR.rainbow_light(phase)
+	return
+		sin(phase)*.2+.7,
+		sin(phase+2.0944)*.2+.7,
+		sin(phase-2.0944)*.2+.7
+end
+function COLOR.rainbow_dark(phase)
+	return
+		sin(phase)*.2+.4,
+		sin(phase+2.0944)*.2+.4,
+		sin(phase-2.0944)*.2+.4
+end
+function COLOR.rainbow_grey(phase)
+	return
+		sin(phase)*.16+.5,
+		sin(phase+2.0944)*.16+.5,
+		sin(phase-2.0944)*.16+.5
 end
 
 return COLOR

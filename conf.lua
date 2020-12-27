@@ -1,3 +1,5 @@
+VERSION_CODE=1
+VERSION_NAME="0.1"
 function love.conf(t)
 	t.identity=""--Saving folder
 	t.version="11.1"

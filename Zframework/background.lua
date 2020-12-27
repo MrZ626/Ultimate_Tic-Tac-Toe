@@ -7,11 +7,12 @@ local BGlist={
 }
 local BG={
 	cur="none",
-	init=nil,
-	resize=nil,
+	defaultBG="none",
+	init=false,
+	resize=false,
 	update=NULL,
 	draw=BGlist.none.draw,
-	event=nil,
+	event=false,
 	discard=NULL,
 }
 
@@ -23,7 +24,13 @@ function BG.send(...)
 		BG.event(...)
 	end
 end
+function BG.setDefaultBG(bg)
+	defaultBG=bg
+end
 function BG.set(background)
+	if not background then
+		background=defaultBG
+	end
 	if background==BG.cur then return end
 	BG.discard()
 	BG.cur=background

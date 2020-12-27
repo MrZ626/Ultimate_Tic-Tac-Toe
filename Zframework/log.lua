@@ -1,11 +1,10 @@
-
 local gc=love.graphics
-local int,min=math.floor,math.min
+local int,max,min=math.floor,math.max,math.min
 local ins,rem=table.insert,table.remove
 
 local debugMesList={}
 local debugMesHistory={
-	"Version: "..VERSION,
+	"Version: "..VERSION_NAME,
 	os.date("Launched at %Y/%m/%d %H:%M"),
 }
 local LOG={}
@@ -26,16 +25,14 @@ function LOG.update()
 end
 function LOG.draw()
 	if debugMesList[1]then
-		gc.push("transform")
 		local k=SCR.w/SCR.w0
-		setFont(int(4*k)*5)
+		setFont(max(int(4*k)*5,5))
 		for i=1,#debugMesList do
 			local M=debugMesList[i]
 			local t=M.time
 			gc.setColor(M.r,M.g,M.b,M.blink>0 and int(M.blink/3)%2 or min(t/26,1))
 			gc.print(M.text,10+(20-min(t,20))^1.5/4,25*i*k)
 		end
-		gc.pop()
 	end
 end
 function LOG.print(text,T,C)--text,type/time,color
@@ -56,7 +53,7 @@ function LOG.print(text,T,C)--text,type/time,color
 		C=C or COLOR.white
 		time=T
 	elseif type(T)=="table"then
-		C,T=T
+		C=T
 	elseif not C then
 		C=COLOR.white
 	end

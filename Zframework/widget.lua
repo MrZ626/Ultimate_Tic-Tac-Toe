@@ -1,15 +1,11 @@
 local gc=love.graphics
 local kb=love.keyboard
+
 local int,abs=math.floor,math.abs
 local max,min=math.max,math.min
 local sub,format=string.sub,string.format
-local ins=table.insert
-
-local Timer=love.timer.getTime
 local setFont,mStr=setFont,mStr
 
-local Empty={}
-local widgetList={}
 local WIDGET={}
 local widgetMetatable={
 	__tostring=function(self)
@@ -19,6 +15,7 @@ local widgetMetatable={
 
 local text={
 	type="text",
+	alpha=0,
 }
 function text:reset()
 	if type(self.text)=="string"then
@@ -29,14 +26,26 @@ function text:reset()
 		self.font=self.font-10
 	end
 end
+function text:update()
+	if self.hideCon and self.hideCon()then
+		if self.alpha>0 then
+			self.alpha=self.alpha-.125
+		end
+	elseif self.alpha<1 then
+		self.alpha=self.alpha+.125
+	end
+end
 function text:draw()
-	gc.setColor(self.color)
-	if self.align=="M"then
-		gc.draw(self.text,self.x-self.text:getWidth()*.5,self.y)
-	elseif self.align=="L"then
-		gc.draw(self.text,self.x,self.y)
-	elseif self.align=="R"then
-		gc.draw(self.text,self.x-self.text:getWidth(),self.y)
+	if self.alpha>0 then
+		local c=self.color
+		gc.setColor(c[1],c[2],c[3],self.alpha)
+		if self.align=="M"then
+			gc.draw(self.text,self.x-self.text:getWidth()*.5,self.y)
+		elseif self.align=="L"then
+			gc.draw(self.text,self.x,self.y)
+		elseif self.align=="R"then
+			gc.draw(self.text,self.x-self.text:getWidth(),self.y)
+		end
 	end
 end
 function WIDGET.newText(D)--name,x,y[,color][,font=30][,align="M"][,hide]
@@ -48,9 +57,10 @@ function WIDGET.newText(D)--name,x,y[,color][,font=30][,align="M"][,hide]
 		color=	D.color and(COLOR[D.color]or D.color)or COLOR.white,
 		font=	D.font or 30,
 		align=	D.align or"M",
-		hide=	D.hide,
+		hideCon=D.hide,
 	}
 	for k,v in next,text do _[k]=v end
+	if not _.hideCon then _.alpha=1 end
 	setmetatable(_,widgetMetatable)
 	return _
 end
@@ -104,8 +114,8 @@ function button:getCenter()
 end
 function button:FX()
 	local ATV=self.ATV
-	sysFX.newRectRipple(
-		.16,
+	SYSFX.newRectRipple(
+		6,
 		self.x-ATV,
 		self.y-ATV,
 		self.w+2*ATV,
@@ -142,10 +152,17 @@ function button:draw()
 		gc.printf(t,x+2,y0+2,w,"center")
 		gc.setColor(r*.5,g*.5,b*.5)
 		gc.printf(t,x,y0,w,"center")
+	else
+		self.text=self.name or"NONAME"
 	end
 end
 function button:getInfo()
 	return format("x=%d,y=%d,w=%d,h=%d,font=%d",self.x+self.w*.5,self.y+self.h*.5,self.w,self.h,self.font)
+end
+function button:press()
+	self.code()
+	self:FX()
+	SFX.play("button")
 end
 function WIDGET.newButton(D)--name,x,y,w[,h][,color][,font],code[,hide]
 	if not D.h then D.h=D.w end
@@ -218,10 +235,15 @@ function key:draw()
 		setFont(self.font)
 		gc.setColor(r,g,b,1.2)
 		gc.printf(t,x,y+h*.5-self.font*.7,w,"center")
+	else
+		self.text=self.name or"NONAME"
 	end
 end
 function key:getInfo()
 	return format("x=%d,y=%d,w=%d,h=%d,font=%d",self.x+self.w*.5,self.y+self.h*.5,self.w,self.h,self.font)
+end
+function key:press()
+	self.code()
 end
 function WIDGET.newKey(D)--name,x,y,w[,h][,color][,font],code[,hide]
 	if not D.h then D.h=D.w end
@@ -307,6 +329,10 @@ function switch:draw()
 end
 function switch:getInfo()
 	return format("x=%d,y=%d,font=%d",self.x,self.y,self.font)
+end
+function switch:press()
+	self.code()
+	SFX.play("move")
 end
 function WIDGET.newSwitch(D)--name,x,y[,font][,disp],code,hide
 	local _={
@@ -406,7 +432,6 @@ function slider:draw()
 	gc.setColor(.8,.8,.8)
 	gc.rectangle("fill",bx,by,bw,bh)
 
-	local t
 	if ATV>0 then
 		gc.setLineWidth(2)
 		gc.setColor(1,1,1,ATV*.16)
@@ -419,7 +444,7 @@ function slider:draw()
 	end
 
 	--Text
-	t=self.text
+	local t=self.text
 	if t then
 		gc.setColor(1,1,1)
 		setFont(self.font)
@@ -429,10 +454,41 @@ end
 function slider:getInfo()
 	return format("x=%d,y=%d,w=%d",self.x,self.y,self.w)
 end
+function slider:drag(x)
+	if not x then return end
+	x=x-self.x
+	local p=self.disp()
+	local P=x<0 and 0 or x>self.w and self.unit or x/self.w*self.unit
+	if not self.smooth then
+		P=int(P+.5)
+	end
+	if p~=P then
+		self.code(P)
+	end
+	if self.change and TIME()-self.lastTime>.18 then
+		self.lastTime=TIME()
+		self.change()
+	end
+end
+function slider:release(x)
+	self.lastTime=0
+	self:drag(x)
+end
+function slider:arrowKey(isLeft)
+	local p=self.disp()
+	local u=(self.smooth and .01 or 1)
+	local P=isLeft and max(p-u,0)or min(p+u,self.unit)
+	if p==P or not P then return end
+	self.code(P)
+	if self.change and TIME()-self.lastTime>.18 then
+		self.lastTime=TIME()
+		self.change()
+	end
+end
 function WIDGET.newSlider(D)--name,x,y,w[,unit][,smooth][,font][,change],disp,code,hide
 	local _={
-		name=		D.name,
-		text=D.text,
+		name=	D.name,
+		text=	D.text,
 
 		x=		D.x,
 		y=		D.y,
@@ -447,13 +503,13 @@ function WIDGET.newSlider(D)--name,x,y,w[,unit][,smooth][,font][,change],disp,co
 		},
 
 		unit=	D.unit or 1,
-		smooth=nil,
+		smooth=	false,
 		font=	D.font or 30,
 		change=	D.change,
 		disp=	D.disp,
 		code=	D.code,
 		hide=	D.hide,
-		show=	nil,
+		show=	false,
 	}
 	if D.smooth~=nil then
 		_.smooth=D.smooth
@@ -482,7 +538,7 @@ local selector={
 	type="selector",
 	ATV=8,--Activating time(0~4)
 	select=0,--Selected item ID
-	selText=nil,--Selected item name
+	selText=false,--Selected item name
 }
 function selector:reset()
 	self.ATV=0
@@ -531,7 +587,7 @@ function selector:draw()
 	gc.rectangle("line",x,y,w,60)
 
 	gc.setColor(1,1,1,.2+ATV*.1)
-	local t=(Timer()%.5)^.5
+	local t=(TIME()%.5)^.5
 	setFont(30)
 	if self.select>1 then
 		gc.draw("<",x+6,y+20)
@@ -550,7 +606,7 @@ function selector:draw()
 	end
 
 	--Text
-	setFont(28)
+	setFont(30)
 	t=self.text
 	if t then
 		gc.setColor(r,g,b)
@@ -561,6 +617,43 @@ function selector:draw()
 end
 function selector:getInfo()
 	return format("x=%d,y=%d,w=%d",self.x+self.w*.5,self.y+30,self.w)
+end
+function selector:press(x)
+	if x then
+		local s=self.select
+		if x<self.x+self.w*.5 then
+			if s>1 then
+				s=s-1
+				SYSFX.newShade(3,self.x,self.y,self.w*.5,60)
+			end
+		else
+			if s<#self.list then
+				s=s+1
+				SYSFX.newShade(3,self.x+self.w*.5,self.y,self.w*.5,60)
+			end
+		end
+		if self.select~=s then
+			self.code(self.list[s])
+			self.select=s
+			self.selText=self.list[s]
+			SFX.play("prerotate")
+		end
+	end
+end
+function selector:arrowKey(isLeft)
+	local s=self.select
+	if isLeft and s==1 or not isLeft and s==#self.list then return end
+	if isLeft then
+		s=s-1
+		SYSFX.newShade(3,self.x,self.y,self.w*.5,60)
+	else
+		s=s+1
+		SYSFX.newShade(3,self.x+self.w*.5,self.y,self.w*.5,60)
+	end
+	self.code(self.list[s])
+	self.select=s
+	self.selText=self.list[s]
+	SFX.play("prerotate")
 end
 function WIDGET.newSelector(D)--name,x,y,w[,color],list,disp,code,hide
 	local _={
@@ -642,7 +735,7 @@ function textBox:draw()
 			gc.print("*",x-5+self.font*.5*i,y+h*.5-self.font*.7)
 		end
 	else
-		gc.print(self.value,x+10,y+h*.5-self.font*.7)
+		gc.printf(self.value,x+10,y,self.w,"left")
 		setFont(self.font-10)
 		if WIDGET.sel==self then
 			gc.print(EDITING,x+10,y+12-self.font*1.4)
@@ -651,6 +744,28 @@ function textBox:draw()
 end
 function textBox:getInfo()
 	return format("x=%d,y=%d,w=%d,h=%d",self.x+self.w*.5,self.y+self.h*.5,self.w,self.h)
+end
+function textBox:press()
+	if MOBILE then
+		local _,y1=SCR.xOy:transformPoint(0,self.y+self.h)
+		kb.setTextInput(true,0,y1,1,1)
+	end
+end
+function textBox:keypress(k)
+	local t=self.value
+	if #t>0 and EDITING==""then
+		if k=="backspace"then
+			while t:byte(#t)>=128 and t:byte(#t)<192 do
+				t=sub(t,1,-2)
+			end
+			t=sub(t,1,-2)
+			SFX.play("lock")
+		elseif k=="delete"then
+			t=""
+			SFX.play("hold")
+		end
+		self.value=t
+	end
 end
 function WIDGET.newTextBox(D)--name,x,y,w[,h][,font][,secret][,regex],hide
 	local _={
@@ -668,7 +783,7 @@ function WIDGET.newTextBox(D)--name,x,y,w[,h][,font][,secret][,regex],hide
 			D.x+D.w*.8,D.y,
 		},
 
-		font=	int(D.h/7-1)*5,
+		font=	D.font or int(D.h/7-1)*5,
 		secret=	D.secret,
 		regex=	D.regex,
 		hide=	D.hide,
@@ -679,14 +794,18 @@ function WIDGET.newTextBox(D)--name,x,y,w[,h][,font][,secret][,regex],hide
 end
 
 WIDGET.active={}--Table contains all active widgets
-WIDGET.sel=nil--Selected widget
+WIDGET.sel=false--Selected widget
 
 function WIDGET.lnk_BACK()			SCN.back()end
+function WIDGET.lnk_SETval(k)		return function()	return SETTING[k]				end end
+function WIDGET.lnk_SETrev(k)		return function()	SETTING[k]=not SETTING[k]		end end
+function WIDGET.lnk_SETsto(k)		return function(i)	SETTING[k]=i					end end
+
 function WIDGET.lnk_pressKey(k)		return function()	love.keypressed(k)				end end
 function WIDGET.lnk_goScene(t,s)	return function()	SCN.go(t,s)						end end
 function WIDGET.lnk_swapScene(t,s)	return function()	SCN.swapTo(t,s)					end end
 
-local indexMeta={
+WIDGET.indexMeta={
 	__index=function(L,k)
 		for i=1,#L do
 			if L[i].name==k then
@@ -695,24 +814,15 @@ local indexMeta={
 		end
 	end
 }
-function WIDGET.init(scene,list)
-	local L={}
-	for i=1,#list do
-		ins(L,list[i])
-	end
-	setmetatable(L,indexMeta)
-	widgetList[scene]=L
-end
-function WIDGET.set(scene)
+function WIDGET.set(list)
 	kb.setTextInput(false)
-	WIDGET.sel=nil
-	scene=widgetList[scene]
-	WIDGET.active=scene or Empty
+	WIDGET.sel=false
+	WIDGET.active=list or NONE
 
 	--Reset all widgets
-	if scene then
-		for i=1,#scene do
-			scene[i]:reset()
+	if list then
+		for i=1,#list do
+			list[i]:reset()
 		end
 	end
 end
@@ -725,116 +835,45 @@ function WIDGET.moveCursor(x,y)
 		end
 	end
 	if WIDGET.sel and not WIDGET.sel.keepFocus then
-		WIDGET.sel=nil
+		WIDGET.sel=false
 	end
 end
 function WIDGET.press(x,y)
 	local W=WIDGET.sel
 	if not W then return end
-	if W.type=="button"then
-		W.code()
-		W:FX()
-		SFX.play("button")
-	elseif W.type=="key"then
-		W.code()
-	elseif W.type=="switch"then
-		W.code()
-		SFX.play("move")
+	if W.type=="button"or W.type=="key"or W.type=="switch"or W.type=="selector"or W.type=="textBox"then
+		W:press(x,y)
 	elseif W.type=="slider"then
 		WIDGET.drag(x,y)
-	elseif W.type=="selector"then
-		if x then
-			local s=W.select
-			if x<W.x+W.w*.5 then
-				if s>1 then
-					s=s-1
-					sysFX.newShade(.3,1,1,1,W.x,W.y,W.w*.5,60)
-				end
-			else
-				if s<#W.list then
-					s=s+1
-					sysFX.newShade(.3,1,1,1,W.x+W.w*.5,W.y,W.w*.5,60)
-				end
-			end
-			if W.select~=s then
-				W.code(W.list[s])
-				W.select=s
-				W.selText=W.list[s]
-				SFX.play("prerotate")
-			end
-		end
-	elseif W.type=="textBox"then
-		if MOBILE then
-			local _,y1=SCR.xOy:transformPoint(0,W.y+W.h)
-			kb.setTextInput(true,0,y1,1,1)
-		end
 	end
-	if W.hide and W.hide()then WIDGET.sel=nil end
+	if W.hide and W.hide()then WIDGET.sel=false end
 end
 function WIDGET.drag(x,y)
 	local W=WIDGET.sel
 	if not W then return end
 	if W.type=="slider"then
-		if not x then return end
-		x=x-W.x
-		local p=W.disp()
-		local P=x<0 and 0 or x>W.w and W.unit or x/W.w*W.unit
-		if not W.smooth then
-			P=int(P+.5)
-		end
-		if p~=P then
-			W.code(P)
-		end
-		if W.change and Timer()-W.lastTime>.18 then
-			W.lastTime=Timer()
-			W.change()
-		end
+		W:drag(x,y)
 	elseif not W:isAbove(x,y)then
-		WIDGET.sel=nil
+		WIDGET.sel=false
 	end
 end
 function WIDGET.release(x,y)
 	local W=WIDGET.sel
 	if not W then return end
 	if W.type=="slider"then
-		W.lastTime=0
-		WIDGET.drag(x,y)
+		W:release(x,y)
 	end
 end
-function WIDGET.keyPressed(key)
-	if key=="space"or key=="return"then
+function WIDGET.keyPressed(k)
+	if k=="space"or k=="return"then
 		WIDGET.press()
-	elseif kb.isDown("lshift","lalt","lctrl")and(key=="left"or key=="right")then
+	elseif kb.isDown("lshift","lalt","lctrl")and(k=="left"or k=="right")then
 					--When hold [↑], control slider with left/right
 		local W=WIDGET.sel
-		if not W then return end
-		local isLeft=key=="left"
-		if W.type=="slider"then
-			local p=W.disp()
-			local u=(W.smooth and .01 or 1)
-			local P=isLeft and max(p-u,0)or min(p+u,W.unit)
-			if p==P or not P then return end
-			W.code(P)
-			if W.change and Timer()-W.lastTime>.18 then
-				W.lastTime=Timer()
-				W.change()
-			end
-		elseif W.type=="selector"then
-			local s=W.select
-			if isLeft and s==1 or not isLeft and s==#W.list then return end
-			if isLeft then
-				s=s-1
-				sysFX.newShade(.3,1,1,1,W.x,W.y,W.w*.5,60)
-			else
-				s=s+1
-				sysFX.newShade(.3,1,1,1,W.x+W.w*.5,W.y,W.w*.5,60)
-			end
-			W.code(W.list[s])
-			W.select=s
-			W.selText=W.list[s]
-			SFX.play("prerotate")
+		if W and W.type=="slider"or W.type=="selector"then
+			W:arrowKey(k=="left")
 		end
-	elseif key=="up"or key=="down"or key=="left"or key=="right"then
+	elseif k=="up"or k=="down"or k=="left"or k=="right"then
 		if not WIDGET.sel then
 			for _,v in next,WIDGET.active do
 				if v.isAbove then
@@ -847,10 +886,10 @@ function WIDGET.keyPressed(key)
 		local W=WIDGET.sel
 		if not W.getCenter then return end
 		local WX,WY=W:getCenter()
-		local dir=(key=="right"or key=="down")and 1 or -1
+		local dir=(k=="right"or k=="down")and 1 or -1
 		local tar
 		local minDist=1e99
-		local swap_xy=key=="up"or key=="down"
+		local swap_xy=k=="up"or k=="down"
 		if swap_xy then WX,WY=WY,WX end -- note that we do not swap them back later
 		for _,W1 in ipairs(WIDGET.active)do
 			if W~=W1 and W1.resCtr then
@@ -872,20 +911,11 @@ function WIDGET.keyPressed(key)
 		if tar then
 			WIDGET.sel=tar
 		end
-	elseif WIDGET.sel and WIDGET.sel.type=="textBox"then
-		local t=WIDGET.sel.value
-		if #t==0 then return end
-		if key=="backspace"then
-			while t:byte(#t)>=128 and t:byte(#t)<192 do
-				t=sub(t,1,-2)
-			end
-			t=sub(t,1,-2)
-			SFX.play("lock")
-		elseif key=="delete"then
-			t=""
-			SFX.play("hold")
+	else
+		local W=WIDGET.sel
+		if W and W.type=="textBox"then
+			W:keypress(k)
 		end
-		WIDGET.sel.value=t
 	end
 end
 local keyMirror={
@@ -909,8 +939,8 @@ function WIDGET.gamepadPressed(i)
 				local P=i=="left"and(p>0 and p-1)or p<W.unit and p+1
 				if p==P or not P then return end
 				W.code(P)
-				if W.change and Timer()-W.lastTime>.18 then
-					W.lastTime=Timer()
+				if W.change and TIME()-W.lastTime>.18 then
+					W.lastTime=TIME()
 					W.change()
 				end
 			end

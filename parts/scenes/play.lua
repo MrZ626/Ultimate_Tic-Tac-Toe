@@ -90,12 +90,14 @@ local function place(X,x)
 	round=1-round
 end
 
-function sceneInit.play()
+local scene={}
+
+function scene.sceneInit()
 	restart()
 	BG.set("bg2")
 end
 
-function Pnt.play()
+function scene.draw()
 	gc.push("transform")
 	gc.translate(0,140)
 	gc.scale(4)
@@ -209,19 +211,19 @@ function Pnt.play()
 	end
 end
 
-function touchDown.play(_,x,y)
-	mouseMove.play(x,y)
+function scene.touchDown(_,x,y)
+	scene.mouseMove(x,y)
 end
 
-function touchMove.play(_,x,y)
-	mouseMove.play(x,y)
+function scene.touchMove(_,x,y)
+	scene.mouseMove(x,y)
 end
 
-function touchUp.play(_,x,y)
-	mouseDown.play(x,y)
+function scene.touchUp(_,x,y)
+	scene.mouseDown(x,y)
 end
 
-function mouseMove.play(x,y)
+function scene.mouseMove(x,y)
 	x,y=int(x/40),int((y-140)/40)
 	curX,curx=int(x/3)+int(y/3)*3+1,x%3+y%3*3+1
 	if
@@ -236,12 +238,14 @@ function mouseMove.play(x,y)
 	end
 end
 
-function mouseDown.play(x,y)
-	mouseMove.play(x,y)
+function scene.mouseDown(x,y)
+	scene.mouseMove(x,y)
 	if curX then place(curX,curx)end
 end
 
-WIDGET.init("play",{
+scene.widgetList={
 	WIDGET.newButton({name="quit",text="返回",x=300,y=40,w=90,h=50,font=20,color="lY",code=WIDGET.lnk_BACK}),
 	WIDGET.newButton({name="again",text="重新开始",x=300,y=100,w=90,h=50,font=20,color="lG",code=restart,hide=function()return not gameover end}),
-})
+}
+
+return scene
