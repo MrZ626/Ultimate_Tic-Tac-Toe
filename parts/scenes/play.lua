@@ -14,7 +14,7 @@ local lines={
 }
 
 local board={{},{},{},{},{},{},{},{},{}}
-local score={}
+local point={}
 
 local lastX,lastx
 local curX,curx
@@ -33,7 +33,7 @@ local function restart()
 	gameover=false
 	AItimer=rnd()>.4 and 20
 	for X=1,9 do
-		score[X]=false
+		point[X]=false
 		for x=1,9 do
 			board[X][x]=false
 		end
@@ -65,26 +65,26 @@ local function place(X,x)
 	curX,curx=nil
 	placeTime=Timer()
 	if checkBoard(board[X],round)then
-		score[X]=round
-		if checkBoard(score,round)then
+		point[X]=round
+		if checkBoard(point,round)then
 			gameover=round
 			return
 		else
-			if full(score)then
+			if full(point)then
 				gameover=true
 				return
 			end
 		end
 	else
 		if full(board[X])then
-			score[X]=true
-			if full(score)then
+			point[X]=true
+			if full(point)then
 				gameover=true
 				return
 			end
 		end
 	end
-	if score[x]then
+	if point[x]then
 		target=false
 	else
 		target=x
@@ -122,7 +122,7 @@ local function getAIpos()
 		end
 	else
 		for X=1,9 do
-			if not score[X]then
+			if not point[X]then
 				local sc,x=squareBest(tempBoard,X)
 				if sc>bestS then
 					bestS,bestX,bestx=sc,X,x
@@ -175,10 +175,10 @@ function scene.draw()
 
 	gc.setLineWidth(.8)
 	for X=1,9 do
-		if score[X]then
-			if score[X]==0 then
+		if point[X]then
+			if point[X]==0 then
 				gc.setColor(.5,0,0)
-			elseif score[X]==1 then
+			elseif point[X]==1 then
 				gc.setColor(0,0,.5)
 			else
 				gc.setColor(0,0,0)
@@ -288,7 +288,7 @@ function scene.mouseMove(x,y)
 		curX<1 or curX>9 or
 		curx<1 or curx>9 or
 		AItimer or
-		score[curX]or
+		point[curX]or
 		not(target==curX or not target)or
 		board[curX][curx]or
 		gameover
