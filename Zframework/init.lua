@@ -24,7 +24,7 @@ PROFILE=require"Zframework/profile"
 
 local ms,kb=love.mouse,love.keyboard
 local gc=love.graphics
-local int,rnd=math.floor,math.random
+local int=math.floor
 local ins,rem=table.insert,table.remove
 local SCR=SCR
 
@@ -323,15 +323,7 @@ function love.errorhandler(msg)
 	DBP(table.concat(err,"\n"),1,c-2)
 	gc.reset()
 
-	local errScrShot
-	gc.captureScreenshot(function(_)errScrShot=gc.newImage(_)end)
-	gc.present()
-
-	SFX.fplay("error",SETTING.voc*.8)
-
-	local BGcolor=rnd()>.026 and{.3,.5,.9}or{.62,.3,.926}
 	local needDraw=true
-	local count=0
 	return function()
 		love.event.pump()
 		for E,a,b in love.event.poll()do
@@ -342,34 +334,23 @@ function love.errorhandler(msg)
 				needDraw=true
 			elseif E=="focus"then
 				needDraw=true
-			elseif E=="touchpressed"and b<100 or E=="mousepressed" and a==2 or E=="keypressed"and a=="space"then
-				if count<3 then
-					count=count+1
-				else
-					local code=loadstring(love.system.getClipboardText())
-					if code then
-						code()
-					end
-					count=0
-				end
 			end
 		end
 		if needDraw then
 			gc.discard()
-			gc.clear(BGcolor)
+			gc.clear(.3,.5,.9)
 			gc.setColor(1,1,1)
 			gc.push("transform")
 			gc.replaceTransform(xOy)
-			gc.draw(errScrShot,100,365,nil,512/errScrShot:getWidth(),288/errScrShot:getHeight())
-			setFont(100)gc.print(":(",100,40,0,1.2)
-			setFont(40)gc.printf("ERROR!!!",100,200,SCR.w0-100)
+			setFont(40)gc.print(":(\nError!!!",20,40,0,1.2)
 			setFont(20)
-			gc.print(SYSTEM.."-"..VERSION_NAME,100,660)
-			gc.print("scene:"..SCN.cur,400,660)
-			gc.printf(err[1],626,360,1260-626)
-			gc.print("TRACEBACK",626,426)
+			gc.print(SYSTEM.."-"..VERSION_NAME,20,190)
+			gc.print("scene:"..SCN.cur,20,220)
+			setFont(15)
+			gc.printf(err[1],20,280,330-30)
+			gc.print("TRACEBACK",20,350)
 			for i=4,#err-2 do
-				gc.print(err[i],626,370+20*i)
+				gc.print(err[i],20,290+20*i)
 			end
 			gc.pop()
 			gc.present()
