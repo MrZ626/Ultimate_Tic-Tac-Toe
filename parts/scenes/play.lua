@@ -91,39 +91,51 @@ local function place(X,x)
 	end
 	round=1-round
 end
-local function squareBest(tempBoard,X)
-	local bestS,bestx=0
+local function squareBest(tempBoard,tempPoint,X,turn,depth,SCmul)
+	local bestS,bestx=-1e99
 	for x=1,9 do
 		if not tempBoard[X][x]then
 			local bakSquare=tempBoard[X]
 			tempBoard[X]=copyList(tempBoard[X])
-			tempBoard[X][x]=round
+			tempBoard[X][x]=turn
 			local sc=0
-			if checkBoard(tempBoard[X],round)then
-				sc=100+rnd()
-			else
-				sc=rnd()
+			if checkBoard(tempBoard[X],turn)then
+				tempPoint=copyList(tempPoint)
+				tempPoint[X]=turn
+				if checkBoard(tempPoint,turn)then
+					sc=sc+1e99
+				else
+					sc=sc+100
+				end
 			end
+			if depth<1 and sc<1e9 then
+				if not tempPoint[x]then
+					sc=sc+squareBest(tempBoard,tempPoint,x,1-turn,depth+1,-SCmul)
+				else
+					sc=sc-100
+				end
+			end
+			sc=sc+rnd()
 			if sc>bestS then
 				bestS,bestx=sc,x
 			end
 			tempBoard[X]=bakSquare
 		end
 	end
-	return bestS,bestx
+	return bestS*SCmul,bestx
 end
 local function getAIpos()
-	local bestS,bestX,bestx=0,target,nil
+	local bestS,bestX,bestx=-1e99,target,false
 	local tempBoard={}for i=1,9 do tempBoard[i]=board[i]end
 	if bestX then
-		local sc,x=squareBest(tempBoard,bestX)
+		local sc,x=squareBest(tempBoard,point,bestX,round,0,100)
 		if sc>bestS then
 			bestS,bestx=sc,x
 		end
 	else
 		for X=1,9 do
 			if not point[X]then
-				local sc,x=squareBest(tempBoard,X)
+				local sc,x=squareBest(tempBoard,point,X,round,0,100)
 				if sc>bestS then
 					bestS,bestX,bestx=sc,X,x
 				end
