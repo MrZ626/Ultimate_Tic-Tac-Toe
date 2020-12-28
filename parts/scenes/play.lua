@@ -1,5 +1,5 @@
 local gc=love.graphics
-local int=math.floor
+local int,rnd=math.floor,math.random
 local Timer=love.timer.getTime
 
 local lines={
@@ -22,6 +22,7 @@ local round
 local target
 local placeTime
 local gameover
+local AItimer
 
 local function restart()
 	lastX,lastx=false,false
@@ -30,6 +31,7 @@ local function restart()
 	target=false
 	placeTime=Timer()
 	gameover=false
+	AItimer=rnd()>.4 and 20
 	for X=1,9 do
 		score[X]=false
 		for x=1,9 do
@@ -89,12 +91,63 @@ local function place(X,x)
 	end
 	round=1-round
 end
+local function squareBest(tempBoard,X)
+	local bestS,bestx=0
+	for x=1,9 do
+		if not tempBoard[X][x]then
+			local bakSquare=tempBoard[X]
+			tempBoard[X]=copyList(tempBoard[X])
+			tempBoard[X][x]=round
+			local sc=0
+			if checkBoard(tempBoard[X],round)then
+				sc=100+rnd()
+			else
+				sc=rnd()
+			end
+			if sc>bestS then
+				bestS,bestx=sc,x
+			end
+			tempBoard[X]=bakSquare
+		end
+	end
+	return bestS,bestx
+end
+local function getAIpos()
+	local bestS,bestX,bestx=0,target,nil
+	local tempBoard={}for i=1,9 do tempBoard[i]=board[i]end
+	if bestX then
+		local sc,x=squareBest(tempBoard,bestX)
+		if sc>bestS then
+			bestS,bestx=sc,x
+		end
+	else
+		for X=1,9 do
+			if not score[X]then
+				local sc,x=squareBest(tempBoard,X)
+				if sc>bestS then
+					bestS,bestX,bestx=sc,X,x
+				end
+			end
+		end
+	end
+	return bestX,bestx
+end
 
 local scene={}
 
 function scene.sceneInit()
 	restart()
 	BG.set("bg2")
+end
+
+function scene.update()
+	if AItimer then
+		AItimer=AItimer-1
+		if AItimer==0 then
+			place(getAIpos())
+			AItimer=false
+		end
+	end
 end
 
 function scene.draw()
@@ -107,7 +160,7 @@ function scene.draw()
 	gc.rectangle("fill",0,0,90,90)
 
 	--Draw target area
-	gc.setColor(1,1,1,math.sin((Timer()-placeTime)*5)/5+.2)
+	gc.setColor(1,1,AItimer and .5 or 1,math.sin((Timer()-placeTime)*5)/5+.2)
 	if target then
 		gc.rectangle("fill",(target-1)%3*30,int((target-1)/3)*30,30,30)
 	elseif not gameover then
@@ -193,7 +246,7 @@ function scene.draw()
 		end
 	else
 		--Draw current round mark
-		gc.setColor(.8,.8,.8,.8)
+		gc.setColor(.8,.8,AItimer and .4 or .8,.8)
 		gc.rectangle("fill",80-40,70-40,80,80)
 		gc.setColor(1,1,1)
 		gc.setLineWidth(3)
@@ -208,6 +261,11 @@ function scene.draw()
 			gc.line(80-23,70-23,80+23,70+23)
 			gc.line(80-23,70+23,80+23,70-23)
 		end
+	end
+	if AItimer then
+		setFont(15)
+		gc.setColor(1,1,1)
+		mStr("电脑思考中...",180,90)
 	end
 end
 
@@ -229,6 +287,7 @@ function scene.mouseMove(x,y)
 	if
 		curX<1 or curX>9 or
 		curx<1 or curx>9 or
+		AItimer or
 		score[curX]or
 		not(target==curX or not target)or
 		board[curX][curx]or
@@ -240,7 +299,12 @@ end
 
 function scene.mouseDown(x,y)
 	scene.mouseMove(x,y)
-	if curX then place(curX,curx)end
+	if curX then
+		place(curX,curx)
+		if not gameover then
+			AItimer=rnd(40,80)
+		end
+	end
 end
 
 scene.widgetList={
