@@ -1,5 +1,6 @@
 local gc=love.graphics
 local int,rnd=math.floor,math.random
+local sort,ins=table.sort,table.insert
 local Timer=love.timer.getTime
 
 local lines={
@@ -91,8 +92,89 @@ local function place(X,x)
 	end
 	round=1-round
 end
-local function getAIpos(data)
-	--return bestX,bestx
+local function amoutAdvantage(b)
+	local count=0
+	for i=1,9 do
+		if b[i]then
+			if b[i]==round then
+				count=count+.5
+			else
+				count=count-.5
+			end
+		end
+	end
+	return count
+end
+local toX={1,2,3,1,2,3,1,2,3}
+local toY={1,1,1,2,2,2,3,3,3}
+local lineVal={--Thanks for Gzy's idea
+	{1,0,1,0,1},
+	{0,1,1,1,0},
+	{1,1,9,1,1},
+	{0,1,1,1,0},
+	{1,0,1,0,1},
+}
+local function valComp(a,b)
+	return a[1]>b[1]
+end
+local function getScore(t,x)
+	--Set squareVal[x] as initial score
+	local sc=0
+	-- local sc=squareVal[x]
+
+	--Calculate lining points
+	for i=1,9 do
+		if t[i]then
+			--Try connect & block lines
+			local dv=lineVal[3+toY[i]-toY[x]][3+toX[i]-toX[x]]
+			if t[i]==round then
+				sc=sc+dv
+			else
+				sc=sc+dv*1.5
+			end
+		end
+	end
+
+	--Avoid opponement's win
+	local after=copyList(t);after[x]=1-round
+	if checkBoard(after,1-round)then sc=sc+6 end
+
+	--Check winning a square
+	after=copyList(t);after[x]=round
+	if checkBoard(after,round)then sc=sc+10 end
+
+	--Avoid amout-dangerous board
+	sc=sc+amoutAdvantage(board[x])
+
+	--Avoid let opponement free
+	if point[x]then sc=sc-8 end
+	return sc+rnd()-.5
+end
+local function getAIpos()
+	local vals={}
+	if target then
+		local t=board[target]
+		for x=1,9 do
+			if not t[x]then
+				ins(vals,{getScore(t,x),x})
+			end
+		end
+		sort(vals,valComp)
+		return target,vals[1][2]
+	else
+		for X=1,9 do
+			if not point[X]then
+				t=board[X]
+				for x=1,9 do
+					if not t[x]then
+						ins(vals,{getScore(t,x),X,x})
+					end
+				end
+			end
+		end
+		sort(vals,valComp)
+		return vals[1][2],vals[1][3]
+	end
 end
 
 local scene={}
@@ -106,7 +188,7 @@ function scene.update()
 	if AItimer then
 		AItimer=AItimer-1
 		if AItimer==0 then
-			place(getAIpos({board=copyList(board),point=copyList(point),round=round,target=target}))
+			place(getAIpos())
 			AItimer=false
 		end
 	end
