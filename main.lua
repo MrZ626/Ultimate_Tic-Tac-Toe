@@ -10,9 +10,9 @@ SYSTEM=love.system.getOS()
 VERSION="V0.9"
 MOBILE=SYSTEM=="Android"or SYSTEM=="iOS"
 SETTING={
-	sfx=true,
-	bgm=true,
-	vib=true,
+	sfx=1,
+	bgm=1,
+	vib=1,
 }
 EDITING=""
 require"Zframework"--Load framework
@@ -23,7 +23,12 @@ IMG.init{
 	batteryImage="power.png",
 	snow="life.png",
 }IMG.loadAll()
-SFX.init{}SFX.loadAll()
+SFX.init{
+	"move",
+	"button",
+	"win",
+	"fail",
+}SFX.loadAll()
 BGM.init{}BGM.loadAll()
 VOC.init{}VOC.loadAll()
 
