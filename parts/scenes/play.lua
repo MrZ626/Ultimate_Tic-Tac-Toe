@@ -3,16 +3,14 @@ local int,rnd=math.floor,math.random
 local sort,ins=table.sort,table.insert
 local Timer=love.timer.getTime
 
-local lines={
-	{1,2,3},
-	{4,5,6},
-	{7,8,9},
-	{1,4,7},
-	{2,5,8},
-	{3,6,9},
-	{1,5,9},
-	{3,5,7},
-}
+local function full(L)--Check if L is full in 1~9
+	for i=1,9 do
+		if not L[i]then
+			return false
+		end
+	end
+	return true
+end
 
 local board={{},{},{},{},{},{},{},{},{}}
 local point={}
@@ -41,7 +39,17 @@ local function restart()
 	end
 end
 
-local function checkBoard(b,p)
+local lines={
+	{1,2,3},
+	{4,5,6},
+	{7,8,9},
+	{1,4,7},
+	{2,5,8},
+	{3,6,9},
+	{1,5,9},
+	{3,5,7},
+}
+local function checkBoard(b,p)--Check if square b is win by p
 	for i=1,8 do
 		for j=1,3 do
 			if b[lines[i][j]]~=p then
@@ -52,15 +60,7 @@ local function checkBoard(b,p)
 		::nextLine::
 	end
 end
-local function full(L)
-	for i=1,9 do
-		if not L[i]then
-			return false
-		end
-	end
-	return true
-end
-local function place(X,x)
+local function place(X,x)--Place at (X,x)
 	board[X][x]=round
 	lastX,lastx=X,x
 	curX,curx=nil
@@ -92,7 +92,7 @@ local function place(X,x)
 	end
 	round=1-round
 end
-local function amoutAdvantage(b)
+local function amoutAdvantage(b)--Check amount advantage in board b (for current round)
 	local count=0
 	for i=1,9 do
 		if b[i]then
@@ -107,7 +107,7 @@ local function amoutAdvantage(b)
 end
 local toX={1,2,3,1,2,3,1,2,3}
 local toY={1,1,1,2,2,2,3,3,3}
-local lineVal={--Thanks for Gzy's idea
+local lineVal={--Thanks for Particle_G's idea
 	{1,0,1,0,1},
 	{0,1,1,1,0},
 	{1,1,9,1,1},
@@ -117,17 +117,15 @@ local lineVal={--Thanks for Gzy's idea
 local function valComp(a,b)
 	return a[1]>b[1]
 end
-local function getScore(t,x)
-	--Set squareVal[x] as initial score
+local function getScore(b,x)--Get score for position x(for board b)
 	local sc=0
-	-- local sc=squareVal[x]
 
 	--Calculate lining points
 	for i=1,9 do
-		if t[i]then
+		if b[i]then
 			--Try connect & block lines
 			local dv=lineVal[3+toY[i]-toY[x]][3+toX[i]-toX[x]]
-			if t[i]==round then
+			if b[i]==round then
 				sc=sc+dv
 			else
 				sc=sc+dv*1.5
@@ -136,11 +134,11 @@ local function getScore(t,x)
 	end
 
 	--Avoid opponement's win
-	local after=copyList(t);after[x]=1-round
+	local after=copyList(b);after[x]=1-round
 	if checkBoard(after,1-round)then sc=sc+6 end
 
 	--Check winning a square
-	after=copyList(t);after[x]=round
+	after=copyList(b);after[x]=round
 	if checkBoard(after,round)then sc=sc+10 end
 
 	--Avoid amout-dangerous board
@@ -150,7 +148,7 @@ local function getScore(t,x)
 	if point[x]then sc=sc-8 end
 	return sc+rnd()-.5
 end
-local function getAIpos()
+local function getAIpos()--Get a best position (X,x)
 	local vals={}
 	if target then
 		local t=board[target]
