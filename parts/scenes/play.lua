@@ -32,7 +32,12 @@ local function restart()
 	target=false
 	placeTime=Timer()
 	gameover=false
-	AItimer=rnd()>.4 and 20
+	if rnd()>.4 then
+		AItimer=20
+		round=1
+	else
+		AItimer=false
+	end
 	for X=1,9 do
 		point[X]=false
 		for x=1,9 do
