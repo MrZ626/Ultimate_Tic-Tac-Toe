@@ -15,6 +15,7 @@ end
 local board={{},{},{},{},{},{},{},{},{}}
 local point={}
 
+local score
 local lastX,lastx
 local curX,curx
 local round
@@ -24,6 +25,7 @@ local gameover
 local AItimer
 
 local function restart()
+	score={[0]=0,0}
 	lastX,lastx=false,false
 	curX,curx=nil
 	round=0
@@ -69,6 +71,7 @@ local function place(X,x)--Place at (X,x)
 		point[X]=round
 		if checkBoard(point,round)then
 			gameover=round
+			score[round]=score[round]+1
 			return
 		else
 			if full(point)then
@@ -309,6 +312,11 @@ function scene.draw()
 		gc.setColor(1,1,1)
 		mStr("电脑思考中...",180,90)
 	end
+	setFont(30)
+	gc.setColor(1,.6,.6)
+	mStr(score[0],50,505)
+	gc.setColor(.6,.6,1)
+	mStr(score[1],310,505)
 end
 
 function scene.touchDown(_,x,y)
