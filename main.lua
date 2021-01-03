@@ -28,8 +28,10 @@ SFX.init{
 	"button",
 	"win",
 	"fail",
+	"tie",
+	"reach",
 }SFX.loadAll()
-BGM.init{}BGM.loadAll()
+BGM.init{"title","play"}BGM.loadAll()
 VOC.init{}VOC.loadAll()
 
 --Load shader files from SOURCE ONLY

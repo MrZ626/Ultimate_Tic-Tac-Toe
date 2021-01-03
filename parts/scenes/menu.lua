@@ -4,6 +4,7 @@ local scene={}
 
 function scene.sceneInit()
 	BG.set("bg1")
+	BGM.play("title")
 end
 
 function scene.draw()

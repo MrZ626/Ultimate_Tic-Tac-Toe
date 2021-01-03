@@ -71,14 +71,18 @@ local function place(X,x)--Place at (X,x)
 	lastX,lastx=X,x
 	curX,curx=nil
 	placeTime=Timer()
+	SFX.play("move")
 	if checkBoard(board[X],round)then
+		SFX.play("reach")
 		point[X]=round
 		if checkBoard(point,round)then
 			gameover=round
 			score[round]=score[round]+1
+			SFX.play(round==0 and"win"or"fail")
 			return
 		else
 			if full(point)then
+				SFX.play("tie")
 				gameover=true
 				return
 			end
@@ -87,6 +91,7 @@ local function place(X,x)--Place at (X,x)
 		if full(board[X])then
 			point[X]=true
 			if full(point)then
+				SFX.play("tie")
 				gameover=true
 				return
 			end
@@ -187,7 +192,8 @@ local scene={}
 function scene.sceneInit()
 	score={[0]=0,0}
 	restart()
-	BG.set("bg2")
+	BG.set("rainbow")
+	BGM.play("play")
 end
 
 function scene.update()
