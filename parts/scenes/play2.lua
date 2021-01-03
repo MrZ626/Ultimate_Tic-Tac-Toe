@@ -96,6 +96,7 @@ end
 local scene={}
 
 function scene.sceneInit()
+	score={[0]=0,0}
 	restart()
 	BG.set("bg2")
 end

@@ -25,7 +25,6 @@ local gameover
 local AItimer
 
 local function restart()
-	score={[0]=0,0}
 	lastX,lastx=false,false
 	curX,curx=nil
 	round=0
@@ -186,6 +185,7 @@ end
 local scene={}
 
 function scene.sceneInit()
+	score={[0]=0,0}
 	restart()
 	BG.set("bg2")
 end
